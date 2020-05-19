@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Chats</h1>
+    <p>
+    <ul>
+    {% for chat in chats %}
+    <li> <a href="/chat/{{ chat.name }}">{{ chat.name }}</a> - {{ chat.topic }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

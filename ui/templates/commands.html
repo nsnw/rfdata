@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Command log</h1>
+    <p>
+    <pre>{% for command in commands %}<span class="chat-ts">[{{ command.ts }}]</span> {% if command.response %}<span class="chat-name"> &lt;&lt;&lt; {% else %}<span class="message-read"> &gt;&gt;&gt; {% endif %}{{ command.source.station }}</span> {{ command.command }}<br>{% endfor %}</pre>
+{% endblock %}

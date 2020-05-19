@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Mailboxes</h1>
+    <p>
+    <ul>
+    {% for mailbox in mailboxes %}
+    <li> <a href="/mailbox/{{ mailbox.owner.station }}">{{ mailbox.owner.station }}</a> ({{ mailbox.count }}) {% if mailbox.unread %}<span class="chat-name">[u]</span>{% endif %}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Mailbox <span class="chat-name">{{ mailbox.owner.station }}</span></h1>
+    <p>
+    <pre>{% for message in messages %}<span class="chat-ts">[{{ message.ts }}]</span> <span class="chat-source">{{ message.source.station }}</span> {{ message.message }}{% if message.read %} <span class="message-read">[read]</span>{% endif %}<br>{% endfor %}</pre>
+{% endblock %}

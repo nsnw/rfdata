@@ -1,0 +1,18 @@
+aprsis:
+  server: APRS_IS_SERVER
+  port: 10152
+  callsign: YOUR_CALLSIGN
+  passcode: YOUR_PASSCODE
+
+qrz:
+  username: QRZ_USERNAME
+  password: QRZ_PASSWORD
+
+aprsfi:
+  key: API_KEY
+
+checkwx:
+  key: API_KEY
+
+darksky:
+  key: API_KEY

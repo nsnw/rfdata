@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Chat <span class="chat-name">{{ chat_name }}</span></h1>
+    {% if chat_topic %}<p><b>Topic</b>: {{ chat_topic }}{% endif %}
+    <p>
+    <b>Members</b>: {% for member in members %}{{ member.station }} {% endfor %}
+    <p>
+    <pre>{% for message in messages %}<span class="chat-ts">[{{ message.ts }}]</span> <span class="chat-source">{{ message.source.station }}</span> {{ message.message }}<br>{% endfor %}</pre>
+{% endblock %}

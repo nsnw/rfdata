@@ -1,0 +1,20 @@
+body {
+  font-family: Verdana, sans-serif;
+}
+
+.chat-name {
+  color: #a00;
+}
+
+.chat-ts {
+  color: #777;
+}
+
+.message-read {
+  color: #0a0;
+}
+
+.chat-source {
+  color: #00a;
+  font-weight: bold;
+}
