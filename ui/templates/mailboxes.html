@@ -4,7 +4,7 @@
     <p>
     <ul>
     {% for mailbox in mailboxes %}
-    <li> <a href="/mailbox/{{ mailbox.owner.station }}">{{ mailbox.owner.station }}</a> ({{ mailbox.count }}) {% if mailbox.unread %}<span class="chat-name">[u]</span>{% endif %}</li>
+    <li> <a href="/mailbox/{{ mailbox.owner.station }}">{{ mailbox.owner.station }}</a> ({{ mailbox.count }}) {% if mailbox.unread %}<span class="chat-name">[u] </span>{% endif %}{% if mailbox.owner.pounce %}<span class="message-read">[p] </span>{% endif %}</li>
     {% endfor %}
     </ul>
 {% endblock %}
