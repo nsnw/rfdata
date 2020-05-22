@@ -405,19 +405,19 @@ class APRSClient(asyncio.Protocol):
                     # Handle solar data
                     await self.handle_solar(packet.source)
 
-                elif cmd == "q":
+                elif cmd == "q" or cmd == "seen":
                     # Handle APRS position lookup
                     await self.handle_seen(packet.source, parts)
 
-                elif cmd == "mh":
+                elif cmd == "mh" or cmd == "grid":
                     # Handle Maidenhead grid square lookup
                     await self.handle_mh(packet.source)
 
-                elif cmd == "mt":
+                elif cmd == "mt" or cmd == "metar":
                     # Handle METAR lookup
                     await self.handle_metar(packet.source, parts)
 
-                elif cmd == "wx":
+                elif cmd == "wx" or cmd == "weather":
                     # Handle weather lookup
                     await self.handle_wx(packet.source)
 
