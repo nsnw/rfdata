@@ -26,6 +26,7 @@ from rfdata.qrz import QRZ
 from rfdata.aprsfi import APRSFI
 from rfdata.checkwx import CheckWX
 from rfdata.darksky import DarkSky
+from rfdata.dxwatch import DXWatch
 
 # Set up logging
 logging.basicConfig(
@@ -465,19 +466,7 @@ class APRSClient(asyncio.Protocol):
 
             # Uppercase the callsign, and query the DX cluster
             callsign = args[1].upper()
-            response = await self.get_dx(callsign)
-
-            try:
-                # If we have a response, format it
-                spot = json.loads(re.match(r'^\((.*)\)$', response).groups()[0])[0]
-
-                message = "{} on {} @{} by {}".format(
-                    spot['dxcall'], spot['freq'], spot['time'], spot['call']
-                )
-
-            except Exception as e:
-                logger.error(e)
-                message = "Could not query DX cluster for {}".format(callsign)
+            message = await self.get_dx(callsign)
 
             # Send response
             self.send_message(
@@ -1386,18 +1375,7 @@ class APRSClient(asyncio.Protocol):
 
         logger.info("DX cluster request for {}".format(callsign))
 
-        # Build query
-        query = "callsigns={}".format(callsign).encode()
-
-        logger.info("Querying with {}".format(query))
-
-        # Query DXCluster
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://www.dxcluster.co.uk/api/search_callsign", data=query,
-                headers={'content-type': 'application/x-www-form-urlencoded'}
-            ) as response:
-                return await response.text()
+        return await self.dxwatch.dx(callsign)
 
     def parse_server(self, line):
         """Handle APRS-IS server lines."""
@@ -1678,6 +1656,7 @@ def service(config_file):
     client.aprsfi = APRSFI(apikey=aprsfi_key)
     client.checkwx = CheckWX(apikey=checkwx_key)
     client.darksky = DarkSky(apikey=darksky_key)
+    client.dxwatch = DXWatch()
 
     # Connect to APRS-IS
     client.connect()
