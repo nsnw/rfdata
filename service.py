@@ -378,7 +378,7 @@ class APRSClient(asyncio.Protocol):
 
                 elif cmd == "pn":
                     # Handle pounce mode
-                    await self.handle_pounce_toggle(packet.source)
+                    await self.handle_pounce(packet.source, parts)
 
                 elif cmd == "w":
                     # Handle showing chat membership
@@ -935,23 +935,39 @@ class APRSClient(asyncio.Protocol):
             # Station does not own the chat
             self.send_message(packet.source, "You are not the owner of {}".format(chat_name))
 
-    async def handle_pounce_toggle(self, source):
-        """Handle toggling pounce mode."""
+    async def handle_pounce(self, source, args):
+        """Handle pounce mode"""
+
+        # If there's no arguments, send help
+        if len(args) < 2:
+            self.send_message(source, "Usage: PN <on|off>")
+            return
+
+        state = args[1].lower()
+
+        if state == "on":
+            enabled = True
+        elif state == "off":
+            enabled = False
+        else:
+            self.send_message(source, "Usage: PN <on|off>")
+            return
 
         # Toggle pounce mode for station
-        result = await self.toggle_pounce(source)
+        result = await self.set_pounce(source, enabled)
 
-        if result == 1:
-            # Pounce mode enabled
-            self.send_message(source, "Pounce mode enabled")
-
-        elif result == 2:
-            # Pounce mode disabled
-            self.send_message(source, "Pounce mode disabled")
+        if result:
+            if enabled:
+                self.send_message(source, "Pounce mode enabled")
+            else:
+                self.send_message(source, "Pounce mode disabled")
 
         else:
             # Uh oh
-            self.send_message(source, "Failed to toggle pounce mode")
+            if enabled:
+                self.send_message(source, "Failed to enable pounce mode")
+            else:
+                self.send_message(source, "Failed to disable pounce mode")
 
     @sync_to_async
     def log_command(self, source, message, response=False):
@@ -1321,38 +1337,38 @@ class APRSClient(asyncio.Protocol):
         logger.info("Pounce list is now: {}".format(self._pounce_list))
 
     @sync_to_async
-    def toggle_pounce(self, source):
+    def set_pounce(self, source, enabled):
         """Toggle pounce mode."""
 
         # Get the station object
         # TODO: This should get a get or create
         station = Station.objects.get(station=source)
 
-        if station.pounce is False:
-            # Pounce mode currently disabled, so enable it
+        if enabled:
+            # Enable pounce mode
             station.pounce = True
             station.save()
 
-            logger.info("Pounce for {} set to {}".format(source, station.pounce))
+            logger.info("Pounce for {} enabled".format(source, station.pounce))
             self._pounce_list = [
                 s.station for s in Station.objects.filter(pounce=True).filter(mailbox__unread=True)
             ]
             logger.info("Pounce list is now: {}".format(self._pounce_list))
 
-            return 1
+            return True
 
         else:
-            # Pounce mode currently enabled, so disable it
+            # Disable pounce mode
             station.pounce = False
             station.save()
 
-            logger.info("Pounce for {} set to {}".format(source, station.pounce))
+            logger.info("Pounce for {} disabled".format(source, station.pounce))
             self._pounce_list = [
                 s.station for s in Station.objects.filter(pounce=True).filter(mailbox__unread=True)
             ]
             logger.info("Pounce list is now: {}".format(self._pounce_list))
 
-            return 2
+            return True
 
     async def get_qrz(self, callsign):
         """Query the QRZ API for a callsign."""
