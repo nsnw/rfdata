@@ -27,6 +27,8 @@ from rfdata.aprsfi import APRSFI
 from rfdata.checkwx import CheckWX
 from rfdata.darksky import DarkSky
 from rfdata.dxwatch import DXWatch
+from rfdata.sun import Sun
+from rfdata.pskreporter import PSKReporter
 
 # Set up logging
 logging.basicConfig(
@@ -202,7 +204,12 @@ class APRSClient(asyncio.Protocol):
                     # Respond to help
                     self.send_message(
                         packet.source,
-                        "L R S D Y C J P PN T A M MH MT W WX Q QRZ DX SOL - ?<cmd> for help"
+                        "L R S D E Y C J P PN T A M MH MT W WX Q QRZ DX SOL"
+                    )
+
+                    self.send_message(
+                        packet.source,
+                        "Send ?<cmd> for help"
                     )
 
                     self.send_message(
@@ -238,6 +245,12 @@ class APRSClient(asyncio.Protocol):
                     # Delete a message
                     self.send_message(
                         packet.source, "D <number>: Delete message <number> for your callsign-ssid"
+                    )
+
+                elif cmd == "?e":
+                    # Delete all messages
+                    self.send_message(
+                        packet.source, "E: Empty the mailbox for your callsign-ssid"
                     )
 
                 elif cmd == "?i":
@@ -324,6 +337,18 @@ class APRSClient(asyncio.Protocol):
                         packet.source, "SOL <callsign>: Look up solar data"
                     )
 
+                elif cmd == "?sun":
+                    # Solar data lookup
+                    self.send_message(
+                        packet.source, "SUN: Sunrise/sunset times for your location"
+                    )
+
+                elif cmd == "?pskr":
+                    # Solar data lookup
+                    self.send_message(
+                        packet.source, "PSKR: Get best freqs for your grid from pskreporter.info"
+                    )
+
                 elif cmd == "?q":
                     # APRS position lookup
                     self.send_message(
@@ -363,6 +388,10 @@ class APRSClient(asyncio.Protocol):
                 elif cmd == "d":
                     # Handle deleting messages
                     await self.handle_delete_message(packet.source, parts)
+
+                elif cmd == "e":
+                    # Handle deleting all messages
+                    await self.handle_delete_all_messages(packet.source)
 
                 elif cmd == "c":
                     # Handle creating chats
@@ -405,6 +434,14 @@ class APRSClient(asyncio.Protocol):
                 elif cmd == "sol" or cmd == "solar":
                     # Handle solar data
                     await self.handle_solar(packet.source)
+
+                elif cmd == "sun":
+                    # Handle sunrise/sunset
+                    await self.handle_sunrise_sunset(packet.source)
+
+                elif cmd == "pskr":
+                    # Handle pskreporter best frequencies
+                    await self.handle_pskr_freq(packet.source)
 
                 elif cmd == "q" or cmd == "seen":
                     # Handle APRS position lookup
@@ -626,6 +663,50 @@ class APRSClient(asyncio.Protocol):
                 source, "Could not find {}".format(source)
             )
 
+    async def handle_sunrise_sunset(self, source):
+        logger.info("Querying aprs.fi for {}".format(
+            source
+        ))
+
+        # Query aprs.fi for current position
+        response = await self.aprsfi.station(source)
+
+        if response:
+            # Query for sunrise/sunset
+            sunrise_sunset = await self.sun.sunrise_sunset(response['lat'], response['lng'])
+
+            # Send response
+            self.send_message(
+                source, sunrise_sunset
+            )
+
+        else:
+            self.send_message(
+                source, "Could not find {}".format(source)
+            )
+
+    async def handle_pskr_freq(self, source):
+        logger.info("Querying aprs.fi for {}".format(
+            source
+        ))
+
+        # Query aprs.fi for current position
+        response = await self.aprsfi.station(source)
+
+        if response:
+            # Query for sunrise/sunset
+            best_freqs = await self.pskr.psk_freq(response['lat'], response['lng'])
+
+            # Send response
+            self.send_message(
+                source, best_freqs
+            )
+
+        else:
+            self.send_message(
+                source, "Could not find {}".format(source)
+            )
+
     async def handle_send_message(self, packet):
         """Handle sending a message to another station."""
 
@@ -802,6 +883,21 @@ class APRSClient(asyncio.Protocol):
                 self.send_message(source, "Message #{} not found".format(
                     number
                 ))
+
+    async def handle_delete_all_messages(self, source):
+        """Handle deleting all messages."""
+
+        # Delete them
+        # NOTE: Messages aren't actually deleted, just made invisible
+        deleted = await self.delete_all_messages(source)
+
+        if deleted:
+            # Message deleted
+            self.send_message(source, "Messages deleted")
+
+        else:
+            # No matching message number found
+            self.send_message(source, "Messages not deleted")
 
     async def handle_create_chat(self, source, args):
         """Handle creating chats."""
@@ -1327,6 +1423,31 @@ class APRSClient(asyncio.Protocol):
         return deleted
 
     @sync_to_async
+    def delete_all_messages(self, source):
+        """Delete all messages from a mailbox."""
+
+        # Get the station object
+        # TODO: This should be a get or create
+        station = Station.objects.get(station=source)
+
+        # Get mailbox
+        mailbox = station.mailbox
+        logger.info("Mailbox is {}".format(mailbox))
+        logger.info("Mailbox count is {}".format(mailbox.count))
+
+        # Mark mailbox as read
+        deleted = mailbox.delete_all()
+
+        if deleted:
+            # Message deleted
+            logger.info("Messages for {} deleted.".format(source))
+
+        else:
+            logger.info("Message not deleted for {}".format(source))
+
+        return deleted
+
+    @sync_to_async
     def load_pounce_list(self):
         """Load the pounce list."""
 
@@ -1673,6 +1794,8 @@ def service(config_file):
     client.checkwx = CheckWX(apikey=checkwx_key)
     client.darksky = DarkSky(apikey=darksky_key)
     client.dxwatch = DXWatch()
+    client.sun = Sun()
+    client.pskr = PSKReporter()
 
     # Connect to APRS-IS
     client.connect()

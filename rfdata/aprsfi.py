@@ -4,6 +4,8 @@
 import aiohttp
 import logging
 import json
+from asyncache import cached
+from cachetools import TTLCache
 
 logger = logging.getLogger('aprs-service')
 
@@ -14,6 +16,7 @@ class APRSFI:
     def __init__(self, apikey: str):
         self._apikey = apikey
 
+    @cached(TTLCache(ttl=900, maxsize=1000))
     async def _station_details(self, callsign):
         """Query station details via aprs.fi."""
 

@@ -3,6 +3,8 @@
 import aiohttp
 import xmltodict
 import logging
+from asyncache import cached
+from cachetools import TTLCache
 
 logger = logging.getLogger('aprs-service')
 
@@ -40,6 +42,7 @@ class QRZ(object):
             logger.info("Could not get QRZ session - QRZ lookups disabled.")
             return False
 
+    @cached(TTLCache(ttl=900, maxsize=1000))
     async def callsign(self, callsign, retry=True):
         logger.info("Doing QRZ lookup for {}".format(callsign))
 
