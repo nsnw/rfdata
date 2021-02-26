@@ -1,5 +1,5 @@
 aiofiles==0.4.0
-aiohttp==3.6.2
+aiohttp==3.7.4
 aprspy==0.3.2
 asgiref==3.2.7
 async-timeout==3.0.1
