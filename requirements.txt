@@ -38,7 +38,7 @@ rfc3986==1.4.0
 six==1.14.0
 sniffio==1.1.0
 sqlparse==0.3.1
-ujson==2.0.3
+ujson==5.2.0
 urllib3==1.25.8
 uvloop==0.14.0
 wcwidth==0.1.9
