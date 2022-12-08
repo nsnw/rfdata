@@ -7,7 +7,7 @@ attrs==19.3.0
 bitstring==3.1.6
 blessings==1.7
 bpython==0.19
-certifi==2020.4.5.1
+certifi==2022.12.7
 chardet==3.0.4
 click==7.1.1
 curtsies==0.3.1
